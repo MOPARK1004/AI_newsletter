@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교사를 위한 AI 뉴스레터 라이브러리</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Inter & Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans KR"', '"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-full flex flex-col transition-colors duration-200">
+
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-brand-600 to-indigo-500 text-white p-2.5 rounded-xl shadow-md shadow-brand-500/20">
+                    <i class="fa-solid fa-robot text-xl"></i>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold tracking-wider text-brand-600 dark:text-brand-400 uppercase">School AI Center</span>
+                    <h1 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">선생님을 위한 AI 뉴스레터</h1>
+                </div>
+            </div>
+
+            <!-- Header Quick Actions -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <button id="openGeneratorBtn" onclick="toggleModal('generatorModal')" class="inline-flex items-center space-x-1.5 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 dark:text-brand-300 dark:bg-brand-950/50 dark:hover:bg-brand-900/50 rounded-lg border border-brand-200 dark:border-brand-800 transition">
+                    <i class="fa-solid fa-code-plus"></i>
+                    <span class="hidden sm:inline">신규 호수 코드 생성기</span>
+                    <span class="sm:hidden">코드 생성</span>
+                </button>
+
+                <button id="darkModeToggle" onclick="toggleDarkMode()" class="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 transition" title="다크 모드 전환">
+                    <i class="fa-solid fa-moon dark:hidden text-lg"></i>
+                    <i class="fa-solid fa-sun hidden dark:block text-lg text-amber-400"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Hero Banner & Stats -->
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-brand-950 text-white p-6 sm:p-10 mb-8 shadow-xl">
+            <!-- Background Decorative Orbs -->
+            <div class="absolute -top-24 -right-24 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs text-brand-200 border border-white/10">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>매주 발행되는 교실 속 AI 팁</span>
+                    </div>
+                    <h2 class="text-2xl sm:text-4xl font-black leading-tight tracking-tight text-white">
+                        AI 교육 활용 레터 Archive <br class="hidden sm:inline"/>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 to-purple-300">한눈에 찾아보고 활용하세요!</span>
+                    </h2>
+                    <p class="text-slate-300 text-sm sm:text-base max-w-2xl font-light">
+                        수업 도구, 학생 지도, 업무 자동화 꿀팁까지! 지금까지 발행된 AI 뉴스레터를 한곳에서 모아보실 수 있습니다.
+                    </p>
+                </div>
+
+                <!-- Dashboard Stats Grid -->
+                <div class="grid grid-cols-2 gap-3 sm:gap-4 bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10">
+                    <div class="bg-white/10 p-3.5 rounded-xl border border-white/5">
+                        <span class="text-xs text-slate-300 block">총 발행 호수</span>
+                        <div class="flex items-baseline space-x-1 mt-1">
+                            <span id="statTotalIssues" class="text-2xl sm:text-3xl font-extrabold text-white">0</span>
+                            <span class="text-xs text-slate-300">호</span>
+                        </div>
+                    </div>
+                    <div class="bg-white/10 p-3.5 rounded-xl border border-white/5">
+                        <span class="text-xs text-slate-300 block">최근 업데이트</span>
+                        <div class="flex items-baseline space-x-1 mt-1">
+                            <span id="statLatestDate" class="text-sm font-bold text-brand-300 truncate">-</span>
+                        </div>
+                    </div>
+                    <div class="bg-white/10 p-3.5 rounded-xl border border-white/5">
+                        <span class="text-xs text-slate-300 block">다루는 주요 카테고리</span>
+                        <div class="flex items-baseline space-x-1 mt-1">
+                            <span id="statCategoryCount" class="text-2xl sm:text-3xl font-extrabold text-purple-300">5</span>
+                            <span class="text-xs text-slate-300">개</span>
+                        </div>
+                    </div>
+                    <div class="bg-white/10 p-3.5 rounded-xl border border-white/5">
+                        <span class="text-xs text-slate-300 block">즐겨찾기 저장</span>
+                        <div class="flex items-baseline space-x-1 mt-1">
+                            <span id="statBookmarkCount" class="text-2xl sm:text-3xl font-extrabold text-amber-300">0</span>
+                            <span class="text-xs text-slate-300">개</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls & Filters Section -->
+        <div class="bg-white dark:bg-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 dark:border-slate-700/60 mb-6 space-y-4">
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <!-- Search Input -->
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="제목, 키워드, 내용(예: 퀴즈 생성, 세특, 엑셀) 검색..." 
+                           class="w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition text-slate-800 dark:text-slate-100">
+                    <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Sort & View Controls -->
+                <div class="flex items-center space-x-3 self-end md:self-auto w-full md:w-auto justify-between md:justify-start">
+                    <!-- Sort Select -->
+                    <div class="flex items-center space-x-2">
+                        <label for="sortSelect" class="text-xs font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">정렬:</label>
+                        <select id="sortSelect" onchange="handleSortChange()" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="newest">최신호 순</option>
+                            <option value="oldest">1호부터 순서대로</option>
+                        </select>
+                    </div>
+
+                    <!-- Layout Toggle Buttons -->
+                    <div class="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <button id="cardViewBtn" onclick="switchView('card')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 shadow-sm transition">
+                            <i class="fa-solid fa-grid-2 mr-1"></i>카드
+                        </button>
+                        <button id="listViewBtn" onclick="switchView('list')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition">
+                            <i class="fa-solid fa-list mr-1"></i>목록
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tags Filter Chips -->
+            <div class="flex items-center space-x-2 overflow-x-auto custom-scrollbar pb-1 pt-1" id="tagFilterContainer">
+                <!-- Dynamically populated tags -->
+            </div>
+        </div>
+
+        <!-- Featured Latest Issue Card (Shown when default view & no search) -->
+        <div id="featuredSection" class="mb-8">
+            <!-- Dynamically populated latest item -->
+        </div>
+
+        <!-- Main Newsletter Grid / List Section -->
+        <div>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>전체 뉴스레터 보관함</span>
+                    <span id="resultCountBadge" class="text-xs bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-0.5 rounded-full font-semibold">0개</span>
+                </h3>
+                <button onclick="toggleOnlyBookmarks()" id="bookmarkFilterBtn" class="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 transition flex items-center gap-1.5 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <i class="fa-regular fa-star text-amber-400" id="bookmarkBtnIcon"></i>
+                    <span>즐겨찾기만 보기</span>
+                </button>
+            </div>
+
+            <!-- Newsletter Items Container -->
+            <div id="newsletterGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards injected by JS -->
+            </div>
+
+            <div id="newsletterList" class="hidden overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
+                <!-- List injected by JS -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden py-16 text-center bg-white dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
+                <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto text-slate-400 mb-4 text-2xl">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+                <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">검색 결과가 없습니다</h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">다른 검색어나 카테고리 태그를 선택해 보세요.</p>
+                <button onclick="resetFilters()" class="mt-4 text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline">필터 초기화하기</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 py-8 transition-colors mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-graduation-cap text-slate-400 text-sm"></i>
+                <span>선생님들을 위한 인공지능 교육 활용 뉴스레터 아카이브</span>
+            </div>
+            <div>
+                <span>노션(Notion) 기반 뉴스레터 모음집 | DB 없이 원코드 관리</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Code Generator Modal (Helper tool for adding 7호, 8호, etc.) -->
+    <div id="generatorModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
+                <div class="flex items-center space-x-2">
+                    <div class="p-2 bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 rounded-lg">
+                        <i class="fa-solid fa-code"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 dark:text-white">신규 호수 추가용 코드 생성기</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">새 뉴스레터 정보를 입력하면 소스코드용 JSON을 만들어 드립니다.</p>
+                    </div>
+                </div>
+                <button onclick="toggleModal('generatorModal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-4 sm:p-6 overflow-y-auto custom-scrollbar space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">호수 (숫자)</label>
+                        <input type="number" id="genIssue" value="7" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">발행일</label>
+                        <input type="date" id="genDate" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">카테고리</label>
+                        <select id="genCategory" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-brand-500">
+                            <option value="수업활용">수업활용</option>
+                            <option value="업무효율">업무효율</option>
+                            <option value="생성형AI">생성형AI</option>
+                            <option value="행정자동화">행정자동화</option>
+                            <option value="윤리/가이드라인">윤리/가이드라인</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">뉴스레터 제목</label>
+                    <input type="text" id="genTitle" placeholder="예: [7호] 생성형 AI로 교과 평가 문항 설계하기" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">노션 URL</label>
+                    <input type="url" id="genUrl" placeholder="URL주소" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">한 줄 핵심 요약</label>
+                    <textarea id="genSummary" rows="2" placeholder="뉴스레터의 핵심 내용을 간단히 정리하세요." class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-brand-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">태그 (쉼표로 구분)</label>
+                    <input type="text" id="genTags" placeholder="수업활용, 평가, ChatGPT, 프롬프트" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                <!-- Generated Output -->
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-xs font-semibold text-brand-600 dark:text-brand-400">복사하여 JS 코드 배열(newsletterData) 상단에 추가할 코드:</label>
+                        <button onclick="copyGeneratedCode()" class="text-xs text-brand-600 hover:text-brand-700 dark:text-brand-400 font-bold flex items-center gap-1">
+                            <i class="fa-regular fa-copy"></i> 코드 복사
+                        </button>
+                    </div>
+                    <pre id="codeOutput" class="bg-slate-900 text-slate-100 p-3 rounded-xl text-xs font-mono overflow-x-auto border border-slate-800 selection:bg-brand-500 selection:text-white">Generate Code...</pre>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-end">
+                <button onclick="toggleModal('generatorModal')" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl hover:bg-slate-300 dark:hover:bg-slate-600 transition">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 ease-out bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 pointer-events-none">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600"></i>
+        <span id="toastMsg" class="text-xs font-medium">알림 메시지</span>
+    </div>
+
+    <script>
+        /**
+         * =========================================================================
+         * [교사용 AI 뉴스레터 데이터베이스]
+         * -------------------------------------------------------------------------
+         * 신규 뉴스레터(7호, 8호...)를 추가할 때 아래 배열 맨 위에 
+         * 객체를 추가하시면 자동으로 사이트에 반영됩니다!
+         * =========================================================================
+         */
+        const newsletterData = [
+            {
+                issue: 6,
+                title: "GPT-6 Astra 완전 해부: 교사 업무를 처음부터 끝까지 대신하는 AI가 왔다",
+                date: "2026-09-16",
+                category: "AI트렌드",
+                url: "https://cactus-acapella-60d.notion.site/AI-6-3d78268a47d68084bebbd5b890bf485c?source=copy_link",
+                summary: "2026년 9월 출시된 GPT-6 Astra는 컴퓨터를 직접 조작하고 파일을 만들고 저장까지 스스로 완료하는 AI입니다. 수업자료 제작·공문 분석·생기부 초안·홍보 포스터 제작까지 교사 업무 전반에 바로 활용할 수 있는 실전 예제 7가지를 소개합니다.",
+                tags: ["AI트렌드", "생성형AI", "행정자동화", "수업활용", "업무효율"],
+                isHot: true
+            },
+            {
+                issue: 5,
+                title: "노션 AI, 내 업무를 대신 써준다: 회의록부터 생기부까지",
+                date: "2026-06-26",
+                category: "업무효율",
+                url: "https://cactus-acapella-60d.notion.site/AI-5-38a8268a47d680e99437d8ac9812f284?source=copy_link",
+                summary: "노션 안에 내장된 AI로 문서 초안 작성·회의 자동 기록·PDF 분석·학생 생활기록부 문구 생성까지 교사 업무 8가지를 자동화하는 방법을 소개합니다. 이미 노션을 쓰는 선생님이라면 추가 학습 없이 바로 시작할 수 있습니다.",
+                tags: ["업무효율", "행정자동화", "수업활용", "생성형AI"],
+                isHot: false
+            },
+            {
+                issue: 4,
+                title: "진짜 AI Agent 체험: Claude로 Gmail·구글 드라이브·캔바를 말로 조종하기",
+                date: "2026-04-00",
+                category: "행정자동화",
+                url: "https://cactus-acapella-60d.notion.site/AI-4-3838268a47d680dd8736f437179bf026?source=copy_link",
+                summary: "Claude가 Gmail·구글 드라이브·구글 캘린더·캔바에 직접 연결되어 학교 업무를 자동으로 처리합니다. 이메일 작성·전송, 파일 검색·요약, 일정 확인·등록을 말 한마디로 해결하는 진짜 AI Agent를 코딩 없이 claude.ai에서 바로 경험할 수 있습니다.",
+                tags: ["행정자동화", "업무효율", "AI트렌드", "생성형AI"],
+                isHot: false
+            },
+            {
+                issue: 3,
+                title: "AI가 내 자료를 읽어준다: NotebookLM으로 문서 분석 끝내기",
+                date: "2026-06-12",
+                category: "행정자동화",
+                url: "https://cactus-acapella-60d.notion.site/AI-3-37b8268a47d680c287ededff7ab21e02?source=copy_link",
+                summary: "구글의 NotebookLM은 내가 올린 문서만을 기반으로 답변하는 AI입니다. 교육과정 PDF·공문·연구자료를 업로드하면 AI가 핵심 내용을 요약하고 질문에 답해줍니다. 교사가 자료를 빠르게 파악하고 수업에 활용하는 방법을 소개합니다.",
+                tags: ["행정자동화", "수업활용", "업무효율", "생성형AI"],
+                isHot: false
+            },
+            {
+                issue: 2,
+                title: "화면에서 바로 검색: Circle to Search 활용법",
+                date: "2026-06-02",
+                category: "수업활용",
+                url: "https://cactus-acapella-60d.notion.site/AI-2-3738268a47d680c6a8fcd21f8b5f6ded?source=copy_link",
+                summary: "스마트폰 화면의 어떤 것이든 동그라미를 그리면 바로 검색되는 구글 Circle to Search를 소개합니다. 수업 중 모르는 단어·이미지·QR코드를 즉시 검색하고, 학생 탐구 활동에 바로 활용하는 방법을 안내합니다.",
+                tags: ["수업활용", "AI트렌드", "업무효율"],
+                isHot: false
+            },
+            {
+                issue: 1,
+                title: "나만의 AI 비서 만들기: Google Gems 완전 정복",
+                date: "2026-05-28",
+                category: "생성형AI",
+                url: "https://cactus-acapella-60d.notion.site/AI-1-36e8268a47d6803ea869c217c3e5f94c?source=copy_link",
+                summary: "구글이 만든 맞춤형 AI 비서 'Gems'를 소개합니다. 교사 업무에 최적화된 나만의 AI를 직접 설계하고, 수업계획서 작성·학생 상담 준비·행사 기획까지 즉시 활용할 수 있는 실전 예제를 담았습니다.",
+                tags: ["생성형AI", "수업활용", "업무효율", "AI트렌드"],
+                isHot: false
+            }
+        ];
+
+        // State variables
+        let currentSearch = "";
+        let currentCategory = "전체";
+        let currentSort = "newest"; // 'newest' | 'oldest'
+        let currentView = "card"; // 'card' | 'list'
+        let showBookmarksOnly = false;
+        let bookmarks = JSON.parse(localStorage.getItem('teacher_ai_newsletter_bookmarks') || '[]');
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            // Set default date in generator modal
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('genDate').value = today;
+
+            // Set default next issue number
+            const maxIssue = Math.max(...newsletterData.map(item => item.issue), 0);
+            document.getElementById('genIssue').value = maxIssue + 1;
+
+            // Render UI Components
+            renderStats();
+            renderTagFilters();
+            renderNewsletters();
+            setupCodeGeneratorListeners();
+            updateCodeOutput();
+        });
+
+        // Toggle Dark Mode
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // Toggle Modals
+        function toggleModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.toggle('hidden');
+        }
+
+        // Render Dashboard Header Stats
+        function renderStats() {
+            document.getElementById('statTotalIssues').innerText = newsletterData.length;
+            
+            const sorted = [...newsletterData].sort((a,b) => new Date(b.date) - new Date(a.date));
+            if (sorted.length > 0) {
+                document.getElementById('statLatestDate').innerText = `${sorted[0].date} (${sorted[0].issue}호)`;
+            }
+
+            const categories = new Set(newsletterData.map(item => item.category));
+            document.getElementById('statCategoryCount').innerText = categories.size;
+            document.getElementById('statBookmarkCount').innerText = bookmarks.length;
+        }
+
+        // Render Category Filter Chips
+        function renderTagFilters() {
+            const container = document.getElementById('tagFilterContainer');
+            const categories = ["전체", ...new Set(newsletterData.map(item => item.category))];
+            
+            container.innerHTML = categories.map(cat => {
+                const isActive = cat === currentCategory;
+                const activeClasses = isActive 
+                    ? "bg-brand-600 text-white shadow-sm shadow-brand-500/30" 
+                    : "bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700";
+                
+                return `
+                    <button onclick="setCategory('${cat}')" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap ${activeClasses}">
+                        ${cat === "전체" ? '<i class="fa-solid fa-layer-group mr-1.5"></i>' : ''}${cat}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function setCategory(cat) {
+            currentCategory = cat;
+            renderTagFilters();
+            renderNewsletters();
+        }
+
+        function handleSearch() {
+            const input = document.getElementById('searchInput');
+            currentSearch = input.value.trim().toLowerCase();
+            document.getElementById('clearSearchBtn').classList.toggle('hidden', currentSearch === '');
+            renderNewsletters();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            currentSearch = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            renderNewsletters();
+        }
+
+        function handleSortChange() {
+            currentSort = document.getElementById('sortSelect').value;
+            renderNewsletters();
+        }
+
+        function switchView(view) {
+            currentView = view;
+            const cardBtn = document.getElementById('cardViewBtn');
+            const listBtn = document.getElementById('listViewBtn');
+            
+            if (view === 'card') {
+                cardBtn.className = "px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 shadow-sm transition";
+                listBtn.className = "px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition";
+                document.getElementById('newsletterGrid').classList.remove('hidden');
+                document.getElementById('newsletterList').classList.add('hidden');
+            } else {
+                listBtn.className = "px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 shadow-sm transition";
+                cardBtn.className = "px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition";
+                document.getElementById('newsletterGrid').classList.add('hidden');
+                document.getElementById('newsletterList').classList.remove('hidden');
+            }
+        }
+
+        function toggleOnlyBookmarks() {
+            showBookmarksOnly = !showBookmarksOnly;
+            const btn = document.getElementById('bookmarkFilterBtn');
+            const icon = document.getElementById('bookmarkBtnIcon');
+            
+            if (showBookmarksOnly) {
+                btn.classList.add('border-amber-400', 'bg-amber-50', 'dark:bg-amber-950/40', 'text-amber-600');
+                icon.className = "fa-solid fa-star text-amber-400";
+            } else {
+                btn.classList.remove('border-amber-400', 'bg-amber-50', 'dark:bg-amber-950/40', 'text-amber-600');
+                icon.className = "fa-regular fa-star text-amber-400";
+            }
+            renderNewsletters();
+        }
+
+        function toggleBookmark(issueNumber, event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            if (bookmarks.includes(issueNumber)) {
+                bookmarks = bookmarks.filter(id => id !== issueNumber);
+                showToast("즐겨찾기에서 해제되었습니다.");
+            } else {
+                bookmarks.push(issueNumber);
+                showToast("즐겨찾기에 추가되었습니다!");
+            }
+            
+            localStorage.setItem('teacher_ai_newsletter_bookmarks', JSON.stringify(bookmarks));
+            document.getElementById('statBookmarkCount').innerText = bookmarks.length;
+            renderNewsletters();
+        }
+
+        function resetFilters() {
+            currentCategory = "전체";
+            currentSearch = "";
+            showBookmarksOnly = false;
+            document.getElementById('searchInput').value = "";
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            renderTagFilters();
+            renderNewsletters();
+        }
+
+        // Filter and Sort core algorithm
+        function getFilteredNewsletters() {
+            return newsletterData.filter(item => {
+                // Category Filter
+                if (currentCategory !== "전체" && item.category !== currentCategory) return false;
+                
+                // Bookmark Filter
+                if (showBookmarksOnly && !bookmarks.includes(item.issue)) return false;
+
+                // Search Filter
+                if (currentSearch) {
+                    const titleMatch = item.title.toLowerCase().includes(currentSearch);
+                    const summaryMatch = item.summary.toLowerCase().includes(currentSearch);
+                    const tagMatch = item.tags.some(tag => tag.toLowerCase().includes(currentSearch));
+                    const issueMatch = `${item.issue}호`.includes(currentSearch) || item.issue.toString() === currentSearch;
+                    return titleMatch || summaryMatch || tagMatch || issueMatch;
+                }
+
+                return true;
+            }).sort((a, b) => {
+                if (currentSort === 'newest') return b.issue - a.issue;
+                return a.issue - b.issue;
+            });
+        }
+
+        function renderNewsletters() {
+            const items = getFilteredNewsletters();
+            const gridContainer = document.getElementById('newsletterGrid');
+            const listContainer = document.getElementById('newsletterList');
+            const emptyState = document.getElementById('emptyState');
+            const featuredSection = document.getElementById('featuredSection');
+
+            document.getElementById('resultCountBadge').innerText = `${items.length}개`;
+
+            // Featured Hero Card Logic (Only show when default view: No search, All categories, Newest sort)
+            const latestItem = [...newsletterData].sort((a,b) => b.issue - a.issue)[0];
+            if (latestItem && currentCategory === "전체" && !currentSearch && !showBookmarksOnly && currentSort === "newest") {
+                featuredSection.classList.remove('hidden');
+                featuredSection.innerHTML = renderFeaturedCard(latestItem);
+            } else {
+                featuredSection.classList.add('hidden');
+            }
+
+            if (items.length === 0) {
+                gridContainer.innerHTML = "";
+                listContainer.innerHTML = "";
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            // Render Grid View
+            gridContainer.innerHTML = items.map(item => renderCardHtml(item)).join('');
+
+            // Render List View
+            listContainer.innerHTML = `
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 dark:bg-slate-900/80 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 font-semibold">
+                            <th class="p-3.5 pl-5">호수</th>
+                            <th class="p-3.5">발행일</th>
+                            <th class="p-3.5">제목 및 요약</th>
+                            <th class="p-3.5 hidden sm:table-cell">카테고리</th>
+                            <th class="p-3.5 text-right pr-5">바로가기</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60 text-xs sm:text-sm">
+                        ${items.map(item => renderRowHtml(item)).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Render Featured Latest Newsletter
+        function renderFeaturedCard(item) {
+            const isBookmarked = bookmarks.includes(item.issue);
+            return `
+                <div class="bg-gradient-to-r from-brand-600 to-indigo-700 text-white rounded-3xl p-6 sm:p-8 shadow-lg relative overflow-hidden group">
+                    <div class="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="bg-amber-400 text-slate-950 font-extrabold text-xs px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
+                                <i class="fa-solid fa-fire text-red-600"></i> 최신호 제 ${item.issue}호
+                            </span>
+                            <span class="text-xs bg-white/20 px-2.5 py-1 rounded-full backdrop-blur-md">${item.date}</span>
+                        </div>
+                        <button onclick="toggleBookmark(${item.issue}, event)" class="text-white/80 hover:text-amber-300 transition text-lg">
+                            <i class="${isBookmarked ? 'fa-solid text-amber-300' : 'fa-regular'} fa-star"></i>
+                        </button>
+                    </div>
+
+                    <h3 class="text-xl sm:text-2xl font-bold mb-2 group-hover:underline">
+                        <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+                    </h3>
+                    <p class="text-slate-100 text-xs sm:text-sm mb-6 line-clamp-2 font-light leading-relaxed">
+                        ${item.summary}
+                    </p>
+
+                    <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/15">
+                        <div class="flex flex-wrap gap-1.5">
+                            ${item.tags.map(tag => `<span class="bg-white/15 backdrop-blur-md text-white text-[11px] px-2.5 py-0.5 rounded-md">#${tag}</span>`).join('')}
+                        </div>
+                        <div class="flex items-center space-x-2 w-full sm:w-auto">
+                            <button onclick="copyToClipboard('${item.url}')" class="flex-1 sm:flex-none px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold transition border border-white/20 flex items-center justify-center gap-1.5">
+                                <i class="fa-regular fa-copy"></i> 주소 복사
+                            </button>
+                            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="flex-1 sm:flex-none px-4 py-2 bg-white text-brand-700 hover:bg-slate-100 rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center gap-1.5">
+                                <span>노션 뉴스레터 읽기</span>
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render Card Item HTML
+        function renderCardHtml(item) {
+            const isBookmarked = bookmarks.includes(item.issue);
+            return `
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700/70 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                    <div>
+                        <!-- Card Header -->
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300 text-xs font-extrabold px-2.5 py-0.5 rounded-md">
+                                    제 ${item.issue}호
+                                </span>
+                                <span class="text-[11px] text-slate-400 font-medium">${item.date}</span>
+                            </div>
+                            <button onclick="toggleBookmark(${item.issue}, event)" class="text-slate-300 dark:text-slate-600 hover:text-amber-400 dark:hover:text-amber-400 transition text-base">
+                                <i class="${isBookmarked ? 'fa-solid text-amber-400' : 'fa-regular'} fa-star"></i>
+                            </button>
+                        </div>
+
+                        <!-- Card Title -->
+                        <h4 class="font-bold text-base text-slate-900 dark:text-slate-100 mb-2 leading-snug group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">
+                            <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+                        </h4>
+
+                        <!-- Summary -->
+                        <p class="text-xs text-slate-600 dark:text-slate-300 line-clamp-3 mb-4 leading-relaxed font-normal">
+                            ${item.summary}
+                        </p>
+                    </div>
+
+                    <div>
+                        <!-- Tags -->
+                        <div class="flex flex-wrap gap-1 mb-4">
+                            ${item.tags.map(tag => `<span class="bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 text-[10px] px-2 py-0.5 rounded">#${tag}</span>`).join('')}
+                        </div>
+
+                        <!-- Card Actions -->
+                        <div class="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-700/60">
+                            <button onclick="copyToClipboard('${item.url}')" class="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-medium transition flex items-center justify-center gap-1.5" title="주소 복사">
+                                <i class="fa-regular fa-copy"></i>
+                                <span>주소 복사</span>
+                            </button>
+                            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="flex-1 py-2 px-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center justify-center gap-1">
+                                <span>노션으로 이동</span>
+                                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render List Table Row HTML
+        function renderRowHtml(item) {
+            const isBookmarked = bookmarks.includes(item.issue);
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
+                    <td class="p-3.5 pl-5 font-bold text-brand-600 dark:text-brand-400">
+                        <div class="flex items-center space-x-2">
+                            <button onclick="toggleBookmark(${item.issue}, event)" class="text-slate-300 dark:text-slate-600 hover:text-amber-400">
+                                <i class="${isBookmarked ? 'fa-solid text-amber-400' : 'fa-regular'} fa-star"></i>
+                            </button>
+                            <span>${item.issue}호</span>
+                        </div>
+                    </td>
+                    <td class="p-3.5 text-slate-400 text-xs whitespace-nowrap">${item.date}</td>
+                    <td class="p-3.5">
+                        <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="font-bold text-slate-800 dark:text-slate-100 hover:underline block">
+                            ${item.title}
+                        </a>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">${item.summary}</p>
+                    </td>
+                    <td class="p-3.5 hidden sm:table-cell">
+                        <span class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] px-2 py-0.5 rounded-md font-medium">
+                            ${item.category}
+                        </span>
+                    </td>
+                    <td class="p-3.5 text-right pr-5 whitespace-nowrap">
+                        <div class="flex items-center justify-end space-x-1.5">
+                            <button onclick="copyToClipboard('${item.url}')" class="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="주소 복사">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400 hover:bg-brand-100 rounded-lg text-xs font-bold transition">
+                                읽기 <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Copy to Clipboard (Fallback compatible)
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast("노션 뉴스레터 주소가 복사되었습니다!");
+                }).catch(() => {
+                    fallbackCopyText(text);
+                });
+            } else {
+                fallbackCopyText(text);
+            }
+        }
+
+        function fallbackCopyText(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast("노션 뉴스레터 주소가 복사되었습니다!");
+            } catch (err) {
+                showToast("주소 복사에 실패했습니다. 직접 복사해주세요.");
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // Display Toast Notifications
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.innerText = message;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        // Code Generator Helper Listener
+        function setupCodeGeneratorListeners() {
+            const inputs = ['genIssue', 'genDate', 'genCategory', 'genTitle', 'genUrl', 'genSummary', 'genTags'];
+            inputs.forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem) elem.addEventListener('input', updateCodeOutput);
+            });
+        }
+
+        function updateCodeOutput() {
+            const issue = parseInt(document.getElementById('genIssue').value) || 7;
+            const date = document.getElementById('genDate').value || new Date().toISOString().split('T')[0];
+            const category = document.getElementById('genCategory').value || "수업활용";
+            const title = document.getElementById('genTitle').value || `제${issue}호 AI 뉴스레터 제목`;
+            const url = document.getElementById('genUrl').value || `https://bit.ly/ai-news-${issue}`;
+            const summary = document.getElementById('genSummary').value || "뉴스레터 핵심 내용을 입력하세요.";
+            const rawTags = document.getElementById('genTags').value;
+            
+            const tags = rawTags 
+                ? rawTags.split(',').map(t => t.trim()).filter(t => t) 
+                : ["수업활용", "AI"];
+
+            const snippetObject = {
+                issue: issue,
+                title: title,
+                date: date,
+                category: category,
+                url: url,
+                summary: summary,
+                tags: tags,
+                isHot: true
+            };
+
+            const formattedJson = JSON.stringify(snippetObject, null, 4);
+            document.getElementById('codeOutput').innerText = `// newsletterData 배열 맨 위에 붙여넣으세요:\n${formattedJson},`;
+        }
+
+        function copyGeneratedCode() {
+            const codeText = document.getElementById('codeOutput').innerText;
+            copyToClipboard(codeText);
+        }
+    </script>
+</body>
+</html>
